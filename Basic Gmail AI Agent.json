@@ -1,0 +1,163 @@
+{
+  "name": "Basic Gmail AI Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {
+          "responseMode": "lastNode"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.5,
+      "position": [
+        -576,
+        48
+      ],
+      "id": "39b429b6-6e58-4140-8c64-18968f833d15",
+      "name": "When chat message received",
+      "webhookId": "4fbcba81-ce0c-43a8-a536-adb8dd5ffc5c"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -400,
+        64
+      ],
+      "id": "182c09ac-0442-45a9-a7f5-ca81adfb7850",
+      "name": "Perception"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -608,
+        272
+      ],
+      "id": "1b0831fa-c75a-481e-81bb-706f671a8e39",
+      "name": "Brain",
+      "credentials": {
+        "openAiApi": {
+          "id": "TED0HE9SAcCfB73u",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('To', ``, 'string') }}",
+        "subject": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Subject', ``, 'string') }}",
+        "message": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Message', ``, 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.2,
+      "position": [
+        -304,
+        272
+      ],
+      "id": "856a3a2b-9364-4761-bae0-546403b58551",
+      "name": "Action",
+      "webhookId": "5bcec41c-f889-4326-8952-bc887a5a88f7",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YkPhj23F1i8ZbUW7",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        -480,
+        288
+      ],
+      "id": "da7554ea-c0bf-4302-9fa2-4e9a61cc7c08",
+      "name": "Memory"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Perception",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Brain": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Perception",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Action": {
+      "ai_tool": [
+        [
+          {
+            "node": "Perception",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Perception",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "dynamic",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false,
+    "executionTimeout": 120,
+    "saveExecutionProgress": true,
+    "timeSavedPerExecution": 1
+  },
+  "versionId": "c44e73cd-760c-4220-85e9-d35b72301ae8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "aab002b1e2edea5cf20f203194956c534ac1d38629aba2f439e5cece62936784"
+  },
+  "nodeGroups": [],
+  "id": "S7BCb7B7nrXT57tL",
+  "tags": []
+}

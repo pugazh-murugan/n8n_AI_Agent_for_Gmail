@@ -1,0 +1,601 @@
+{
+  "name": "Voice AI Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "id": "791e0ad6-65b7-44d3-81b6-dd6edcd3248b",
+      "name": "Telegram Trigger",
+      "webhookId": "e0871537-5dea-420d-b3a7-c25432142ca3",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        240
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "tn1PQxhm5TyIw2EO",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Reply the user message with your intelligence :  {{ $json.text }}\n\nName of the user : {{ $('Telegram Trigger').item.json.message.chat.first_name }}",
+        "options": {
+          "systemMessage": "**Final Tool-Calling System Prompt (Optimized)**\n\n**You are a highly reliable conversational AI assistant.\nYour primary job is to determine whether the user's request requires a tool call.\nOnly call a tool when the user explicitly or implicitly requests an action that the tool can perform.\nOtherwise, respond normally.**\n\n---\n\n## **Available Tools & When to Use Them**\n\n### **1. SerpAPI (Web Search)**\n\nCall this tool **only** when:\n\n* The user asks for **latest information**, **current data**, **recent news**, or **something that requires checking the internet**.\n* The answer cannot be determined from general knowledge and clearly needs an online lookup.\n\nExamples that require SerpAPI:\n\n* “Find today’s stock price of Tesla.”\n* “Check the latest news about OpenAI.”\n* “Search the internet for best laptops under ₹50,000.”\n\n---\n\n### **2. Gmail (Send Emails)**\n\nCall this tool **only** when:\n\n* The user wants to **send an email**.\n* The user provides or implies:\n\n  * recipient email\n  * subject\n  * message body\n\n**Email generation rules:**\n\nWhen preparing the Gmail payload:\n\n1. Extract these values from user input (JSON or conversation):\n\n   * `to` → recipient email\n   * `subject` → email subject\n   * `body` → main email content (text or HTML)\n   * `fromName` → optional sender display name\n\n2. Use this email format (strictly follow structure):\n\n```\nSubject: {{subject}}\n\nBody:\nDear {{recipientName}},\n\n{{body}}\n\nRegards,\n{{fromName or \"Team\"}}\n```\n\n**Do NOT add headings or extra formatting.\nDo NOT rewrite the structure.\nJust place the content inside it cleanly.**\n\n3. After sending, return a short status message:\n\n* “Email sent”\n* “Email failed”\n* “Error sending email”\n\n---\n\n### **3. Calculator**\n\nCall this tool **whenever the user wants any mathematical calculation**, simple or complex:\n\n* “What is 342 × 98?”\n* “Calculate my monthly EMI.”\n* “Add these expenses and tell me the total.”\n\n---\n\n## **General Rules**\n\n* If a tool is needed, respond **only** with a tool call in the correct format.\n* If no tool is needed, respond naturally as a helpful assistant.\n* Never hallucinate tool capabilities.\n* Be precise and avoid unnecessary text when calling tools."
+        }
+      },
+      "id": "d8d6d2a4-2769-47cc-9a50-8c2f5212e58a",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "id": "ee155353-941a-4131-8065-9fef7f0023f7",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        736,
+        496
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "0TydGhmdmg1eiSZE",
+          "name": "OpenAI account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "=telegram_{{ $('Telegram Trigger').item.json.message.chat.id }}"
+      },
+      "id": "3a7c8b74-c77c-4d88-a857-13785bb43cc1",
+      "name": "Simple Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        912,
+        496
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "b4fa5adb-9536-4bb7-b730-ddb28a7c4a86",
+      "name": "Telegram",
+      "webhookId": "6b823d36-72e9-4c7b-b57c-d8b376f2230d",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1440,
+        16
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "tn1PQxhm5TyIw2EO",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "7c2fa5ea-f4de-49f6-bfdd-263d37f66a2b",
+      "name": "SerpAPI",
+      "type": "@n8n/n8n-nodes-langchain.toolSerpApi",
+      "typeVersion": 1,
+      "position": [
+        1056,
+        496
+      ],
+      "credentials": {
+        "serpApi": {
+          "id": "0PUPHP1Dlmwjs5R2",
+          "name": "SerpApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('To', ``, 'string') }}",
+        "subject": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Subject', ``, 'string') }}",
+        "message": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Message', ``, 'string') }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "8117252c-e9f8-410c-b850-41e6a67aab96",
+      "name": "Gmail",
+      "webhookId": "05e3173b-ad23-4090-93ef-53d5359eac65",
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.1,
+      "position": [
+        1200,
+        512
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YkPhj23F1i8ZbUW7",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "c1c109fe-92ec-4165-8012-944bc9d1f4f8",
+      "name": "Calculator",
+      "type": "@n8n/n8n-nodes-langchain.toolCalculator",
+      "typeVersion": 1,
+      "position": [
+        1312,
+        496
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "57b7b191-ed61-4ddb-9a9a-09cabac7c1a1",
+                    "leftValue": "={{ $json.message?.voice?.file_id ?? '' }}",
+                    "operator": {
+                      "operation": "notEmpty",
+                      "singleValue": true,
+                      "type": "string"
+                    },
+                    "rightValue": ""
+                  }
+                ],
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                }
+              },
+              "renameOutput": true,
+              "outputKey": "Voice"
+            },
+            {
+              "conditions": {
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "c09769d0-010e-46ba-9f2d-7f80b0fb10e0",
+                    "leftValue": "={{ $json.message?.text ?? '' }}",
+                    "operator": {
+                      "operation": "notEmpty",
+                      "singleValue": true,
+                      "type": "string"
+                    },
+                    "rightValue": ""
+                  }
+                ],
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                }
+              },
+              "renameOutput": true,
+              "outputKey": "Text"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f67c2c91-0c61-4939-ae26-064abb3d2fd6",
+      "name": "Switch",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        224,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a64b1f6e-0e9a-4f2e-934f-fbd88de4783d",
+              "name": "text",
+              "value": "={{ $json.message.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c3bebf90-4a39-495b-aebe-98a0037faf25",
+      "name": "Input_var",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        560,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $json.message.voice.file_id }}",
+        "additionalFields": {}
+      },
+      "id": "0e120ec3-a668-4f87-b09b-55bd83981da5",
+      "name": "Get a file",
+      "webhookId": "4b409361-2fcd-4d22-bd7d-ca387bdd6be2",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        400,
+        64
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "tn1PQxhm5TyIw2EO",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b530a507-a9b8-4005-9ddc-52595fb341d7",
+              "name": "text",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f122bb88-b853-49fe-b4c9-f87e708c209b",
+      "name": "audio_var",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        784,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.output }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "Summarize the input with the high accuracy, ensuring clarity and conciseness. Focus on delivering a contextually rich summary that is optimized for speech synthesis.\n\nRemove redundant phrases, introductory statements, or closing remarks.\n\nThe output should be natural and engaging for an audio format."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "id": "e3cee3d7-4f95-49a5-8d77-db5723cc8b3a",
+      "name": "Basic LLM Chain",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        1408,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "id": "31fc8836-ef7a-481a-a445-07fc91d0c80a",
+      "name": "OpenAI Chat Model1",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1504,
+        448
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "0TydGhmdmg1eiSZE",
+          "name": "OpenAI account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendAudio",
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "binaryData": true,
+        "additionalFields": {}
+      },
+      "id": "36c4a624-044d-433a-a496-dc717850a5b6",
+      "name": "Telegram1",
+      "webhookId": "ae88a711-7e11-4682-9c35-f63c63767cb3",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2000,
+        0
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "tn1PQxhm5TyIw2EO",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "input": "={{ $json.text }}",
+        "options": {}
+      },
+      "id": "0656e8bd-d9e8-4168-9746-e519a3f7e6b1",
+      "name": "TTS",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        1760,
+        224
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "0TydGhmdmg1eiSZE",
+          "name": "OpenAI account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "operation": "transcribe",
+        "options": {}
+      },
+      "id": "460cd0f9-6196-4984-b202-99cba75ea74c",
+      "name": "STT",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        576,
+        64
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "0TydGhmdmg1eiSZE",
+          "name": "OpenAI account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SerpAPI": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculator": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Get a file",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Input_var",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Input_var": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a file": {
+      "main": [
+        [
+          {
+            "node": "STT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "audio_var": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "TTS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TTS": {
+      "main": [
+        [
+          {
+            "node": "Telegram1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "STT": {
+      "main": [
+        [
+          {
+            "node": "audio_var",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "0abb74d5-cbe4-4e47-a212-fe8e73c64db7",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "aab002b1e2edea5cf20f203194956c534ac1d38629aba2f439e5cece62936784"
+  },
+  "nodeGroups": [],
+  "id": "xJRWVz5b5ZdO9Ikb",
+  "tags": []
+}

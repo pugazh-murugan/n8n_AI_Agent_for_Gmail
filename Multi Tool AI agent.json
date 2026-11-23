@@ -1,0 +1,439 @@
+{
+  "name": "Multi Tool AI agent",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "id": "n1",
+      "name": "Telegram Trigger",
+      "webhookId": "cff643fa-0c3d-4392-934a-e392404761ad",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "tn1PQxhm5TyIw2EO",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.message.text }}",
+        "options": {
+          "systemMessage": "=You are a personal assistant with these tools: Document (Google Docs create), Update a document in Google Docs, calendar (Google Calendar), sheet (Google Sheets), gmail, and Google search (SerpApi).\n- If a request needs several actions, call ALL the needed tools in the same turn. Never stop after the first tool.\n- calendar: create an event. Use ISO 8601 times in Asia/Kolkata, like 2026-11-24T10:00:00+05:30. Default duration is 1 hour. Today is {{ $now }}.\n- Document: create a Google Doc with the given title. It returns the new document's \"id\".\n- Update a document in Google Docs: after creating a Google Doc, ALWAYS call this with the EXACT \"id\" from the Document tool's result, passed unchanged as document_id, and write the full content the user asked for. Never invent or guess an ID.\n- sheet: append one row with the given values.\n- gmail: send the email to the given address.\n- Google search (SerpApi): always pass a clear, specific search phrase as the query. Never call it with an empty query.\n- After all tools finish, reply with a short summary of what was created."
+        }
+      },
+      "id": "n2",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        304,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "gpt-4o"
+        },
+        "options": {}
+      },
+      "id": "n3",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        96,
+        304
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "TED0HE9SAcCfB73u",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Telegram Trigger').item.json.message.chat.id }}"
+      },
+      "id": "n4",
+      "name": "Simple Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        256,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Creates a new empty Google Doc and returns its id. Input: the document title.",
+        "folderId": "default",
+        "title": "={{ $fromAI('title','Document title','string') }}"
+      },
+      "id": "n5",
+      "name": "Document",
+      "type": "n8n-nodes-base.googleDocsTool",
+      "typeVersion": 2,
+      "position": [
+        416,
+        304
+      ],
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "OasCQ1yZ1B3tUiJE",
+          "name": "Google Docs account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "=Creates a Google Calendar event. Start and End must be ISO 8601 date-times in the Asia/Kolkata timezone, for example 2026-11-24T10:00:00+05:30. Today's date is {{ $now }}.",
+        "calendar": {
+          "__rl": true,
+          "value": "pugazh13489@gmail.com",
+          "mode": "id"
+        },
+        "additionalFields": {
+          "summary": "={{ $fromAI('Summary', 'Event title', 'string') }}"
+        }
+      },
+      "id": "n6",
+      "name": "calendar",
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        576,
+        304
+      ],
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "FqcuzN70K1Kv0yfu",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Appends one row to the Meeting Log sheet with the event title, date and time.",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1qywpGKSRCVMo66b_K0xlYCvY9ZKFaRjOG6yUhT6J3_0",
+          "mode": "list",
+          "cachedResultName": "Student Details",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1qywpGKSRCVMo66b_K0xlYCvY9ZKFaRjOG6yUhT6J3_0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 891329057,
+          "mode": "list",
+          "cachedResultName": "Sheet3",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1qywpGKSRCVMo66b_K0xlYCvY9ZKFaRjOG6yUhT6J3_0/edit#gid=891329057"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "title": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('title', ``, 'string') }}",
+            "time": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('time', ``, 'string') }}",
+            "date": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('date', ``, 'string') }}"
+          },
+          "matchingColumns": [
+            "date"
+          ],
+          "schema": [
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "date",
+              "displayName": "date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "time",
+              "displayName": "time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "n7",
+      "name": "sheet",
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.5,
+      "position": [
+        736,
+        304
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "vBJ8a5MEKckXlQG4",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('To', `Recipient email`, 'string') }}",
+        "subject": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Subject', `Email subject`, 'string') }}",
+        "message": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Message', `Email body`, 'string') }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "n8",
+      "name": "gmail",
+      "webhookId": "f0ca9b65-fc20-4cf2-811f-783784ad5f96",
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.1,
+      "position": [
+        896,
+        304
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YkPhj23F1i8ZbUW7",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "n9",
+      "name": "Google search in SerpApi",
+      "type": "@n8n/n8n-nodes-langchain.toolSerpApi",
+      "typeVersion": 1,
+      "position": [
+        1056,
+        304
+      ],
+      "credentials": {
+        "serpApi": {
+          "id": "0PUPHP1Dlmwjs5R2",
+          "name": "SerpApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "n10",
+      "name": "Send Telegram Reply",
+      "webhookId": "b652f95e-a26d-44fc-bd3e-8fc8995edc66",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        640,
+        0
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "tn1PQxhm5TyIw2EO",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Writes text into an existing Google Doc. Use it right after creating a document. Inputs: the document ID and the text to write.",
+        "operation": "update",
+        "documentURL": "={{ $fromAI('document_id', 'The exact id of the Google Doc to update, copied from the Document tool result', 'string') }}",
+        "actionsUi": {
+          "actionFields": [
+            {
+              "action": "insert",
+              "text": "={{ $fromAI('text', 'Text to write into the document', 'string') }}"
+            }
+          ]
+        }
+      },
+      "id": "4d633716-8f4e-4aa1-9e6c-d7a7f095b51c",
+      "name": "Update a document in Google Docs",
+      "type": "n8n-nodes-base.googleDocsTool",
+      "typeVersion": 2,
+      "position": [
+        1264,
+        288
+      ],
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "OasCQ1yZ1B3tUiJE",
+          "name": "Google Docs account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Document": {
+      "ai_tool": [
+        [
+          {
+            "index": 0,
+            "node": "AI Agent",
+            "type": "ai_tool"
+          }
+        ]
+      ]
+    },
+    "Google search in SerpApi": {
+      "ai_tool": [
+        [
+          {
+            "index": 0,
+            "node": "AI Agent",
+            "type": "ai_tool"
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "index": 0,
+            "node": "AI Agent",
+            "type": "ai_languageModel"
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "index": 0,
+            "node": "AI Agent",
+            "type": "ai_memory"
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "AI Agent",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "calendar": {
+      "ai_tool": [
+        [
+          {
+            "index": 0,
+            "node": "AI Agent",
+            "type": "ai_tool"
+          }
+        ]
+      ]
+    },
+    "gmail": {
+      "ai_tool": [
+        [
+          {
+            "index": 0,
+            "node": "AI Agent",
+            "type": "ai_tool"
+          }
+        ]
+      ]
+    },
+    "sheet": {
+      "ai_tool": [
+        [
+          {
+            "index": 0,
+            "node": "AI Agent",
+            "type": "ai_tool"
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send Telegram Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update a document in Google Docs": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "97e1c3df-bbba-4645-a096-c5757a5fcc68",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "aab002b1e2edea5cf20f203194956c534ac1d38629aba2f439e5cece62936784"
+  },
+  "nodeGroups": [],
+  "id": "hIBiM1HWRsYPwbeT",
+  "tags": []
+}

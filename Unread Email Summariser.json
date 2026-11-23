@@ -1,0 +1,197 @@
+{
+  "name": "Unread Email Summariser",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "u1",
+      "name": "When clicking 'Execute workflow'",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "limit": 5,
+        "filters": {
+          "readStatus": "unread"
+        }
+      },
+      "id": "u2",
+      "name": "Get unread emails",
+      "webhookId": "ab9c6e47-07cb-42c8-910e-e9e9b16104e0",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        240,
+        0
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YkPhj23F1i8ZbUW7",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Write ONE line (20 words maximum) describing this email.\nNo greeting, no heading, no extra text.\nFrom: {{ $json.From }}    Subject: {{ $json.Subject }}\nPreview: {{ $json.snippet }}",
+        "options": {}
+      },
+      "id": "u3",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        480,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini",
+          "cachedResultName": "gpt-4o-mini",
+          "cachedResultUrl": ""
+        },
+        "options": {}
+      },
+      "id": "u4",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        496,
+        224
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "TED0HE9SAcCfB73u",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "output"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "u5",
+      "name": "Aggregate",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        800,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "pugazh13489@gmail.com",
+        "subject": "Your 5 unread emails",
+        "message": "={{ '<p><b>Your 5 unread emails</b></p><ol>' + $json.output.map(l => '<li>' + l + '</li>').join('') + '</ol>' }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "u6",
+      "name": "Send summary email",
+      "webhookId": "28070aba-21d0-4744-9914-a42e265298df",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1040,
+        0
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YkPhj23F1i8ZbUW7",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "Aggregate",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "Send summary email",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "Get unread emails": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "AI Agent",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "index": 0,
+            "node": "AI Agent",
+            "type": "ai_languageModel"
+          }
+        ]
+      ]
+    },
+    "When clicking 'Execute workflow'": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "Get unread emails",
+            "type": "main"
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "fa14a0c4-3eab-4579-a443-e1488e27bd4e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "aab002b1e2edea5cf20f203194956c534ac1d38629aba2f439e5cece62936784"
+  },
+  "nodeGroups": [],
+  "id": "XKxVUXtwj13edBzc",
+  "tags": []
+}
